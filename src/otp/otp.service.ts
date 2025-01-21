@@ -10,28 +10,35 @@ export class OTPService {
         private otpRepository: Repository<OTP>,
     ) { }
 
+    private async sendViaVendor(phoneNumber: string, vendor: string): Promise<boolean> {
+        // منطق محاكاة لإرسال OTP عبر بائع معين
+        const success = Math.random() > 0.3; // افتراض نسبة نجاح 70%
+        console.log(`Trying ${vendor} for ${phoneNumber}... Success: ${success}`);
+        return success;
+    }
+
     async sendOTP(phoneNumber: string): Promise<string> {
-        // افتراضيًا، أرسل عبر Vendor A
-        const vendor = 'VendorA';
+        const vendors = ['VendorA', 'VendorB']; // قائمة البائعين
+        let success = false;
 
-        const otp = this.otpRepository.create({
-            phoneNumber,
-            vendor,
-        });
-
-        await this.otpRepository.save(otp);
-
-        // منطق الاتصال بـ Vendor A (محاكاة)
-        const success = Math.random() > 0.2; // افتراض نسبة نجاح 80%
-        if (!success) {
-            otp.status = 'failed';
+        for (const vendor of vendors) {
+            const otp = this.otpRepository.create({
+                phoneNumber,
+                vendor,
+            });
             await this.otpRepository.save(otp);
-            throw new Error('Failed to send OTP via Vendor A');
+
+            success = await this.sendViaVendor(phoneNumber, vendor);
+            if (success) {
+                otp.status = 'sent';
+                await this.otpRepository.save(otp);
+                return `OTP sent successfully via ${vendor}`;
+            } else {
+                otp.status = 'failed';
+                await this.otpRepository.save(otp);
+            }
         }
 
-        otp.status = 'sent';
-        await this.otpRepository.save(otp);
-
-        return 'OTP sent successfully via Vendor A';
+        throw new Error('Failed to send OTP via all vendors');
     }
 }
