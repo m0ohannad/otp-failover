@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
+import { OTPModule } from './otp/otp.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { ConfigModule } from '@nestjs/config';
       autoLoadEntities: true,
       synchronize: true, // فقط أثناء التطوير
     }),
+    OTPModule,
   ],
 })
 export class AppModule { }
