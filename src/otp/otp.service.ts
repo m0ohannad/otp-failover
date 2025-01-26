@@ -57,7 +57,7 @@ export class OTPService {
         return success;
     }
 
-    async sendOTP(phoneNumber: string): Promise<string> {
+    async sendOTP(phoneNumber: string, isTest: boolean = false): Promise<string> {
         const vendors = ['VendorA', 'VendorB']; // قائمة البائعين
         let success = false;
 
@@ -70,13 +70,17 @@ export class OTPService {
 
             this.logger.log(`Trying vendor: ${vendor} for phone number: ${phoneNumber}`);
 
-            // success = await this.sendViaVendor(phoneNumber, vendor); // لاختبار محاكاة الفشل
-            success = await this.sendViaTwilio(phoneNumber, vendor); // لإرسال الرسالة الفعلية
+            if (isTest) {
+                success = await this.sendViaVendor(phoneNumber, vendor); // لاختبار محاكاة الفشل
+            } else {
+                success = await this.sendViaTwilio(phoneNumber, vendor); // لإرسال الرسالة الفعلية
+            }
+
             if (success) {
                 otp.status = 'sent';
                 await this.otpRepository.save(otp);
                 this.logger.log(`OTP sent successfully via ${vendor} for ${phoneNumber}`);
-                return `OTP sent successfully via ${vendor}`;
+                return `OTP sent successfully via ${vendor}${isTest ? ' (Test Mode)' : ''}`;
             } else {
                 otp.status = 'failed';
                 await this.otpRepository.save(otp);
@@ -85,7 +89,7 @@ export class OTPService {
         }
 
         this.logger.error(`Failed to send OTP for ${phoneNumber} using all vendors`);
-        throw new Error('Failed to send OTP via all vendors');
+        throw new Error(`Failed to send OTP via all vendors${isTest ? ' (Test Mode)' : ''}`);
     }
 
     async verifyOTP(phoneNumber: string, code: string, vendor: string): Promise<boolean> {
