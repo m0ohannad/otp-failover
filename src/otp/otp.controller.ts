@@ -6,9 +6,9 @@ export class OTPController {
     constructor(private readonly otpService: OTPService) { }
 
     @Post('send')
-    async sendOTP(@Body('phoneNumber') phoneNumber: string, @Body('isTest') isTest: boolean): Promise<string> {
+    async sendOTP(@Body('phoneNumber') phoneNumber: string): Promise<string> {
         try {
-            return await this.otpService.sendOTP(phoneNumber, isTest);
+            return await this.otpService.sendOTP(phoneNumber);
         } catch (error) {
             throw new HttpException({
                 status: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -20,11 +20,7 @@ export class OTPController {
     @Post('verify')
     async verifyOTP(@Body('phoneNumber') phoneNumber: string, @Body('code') code: string, @Body('vendor') vendor: string): Promise<boolean> {
         try {
-            if (vendor === 'VendorA' || vendor === 'VendorB') {
-                return await this.otpService.verifyOTP(phoneNumber, code, vendor);
-            } else {
-                return await this.otpService.verifyVendorOTP(phoneNumber, code);
-            }
+            return await this.otpService.verifyOTP(phoneNumber, code, vendor);
         } catch (error) {
             throw new HttpException({
                 status: HttpStatus.BAD_REQUEST,

@@ -7,6 +7,7 @@ import * as Twilio from 'twilio';
 @Injectable()
 export class OTPService {
     private readonly logger = new Logger(OTPService.name);
+    private readonly isTest = process.env.IS_TEST === 'true';
 
     constructor(
         @InjectRepository(OTP)
@@ -17,7 +18,7 @@ export class OTPService {
         let client: Twilio.Twilio;
         let verifyServiceSid: string;
 
-        // اختيار بيانات الاتصال حسب البائع
+        // اختيار مزود الخدمة حسب الاسم
         if (vendor === 'VendorA') {
             client = Twilio(
                 process.env.TWILIO_A_ACCOUNT_SID,
@@ -50,16 +51,22 @@ export class OTPService {
     }
 
     private async sendViaVendor(phoneNumber: string, vendor: string): Promise<boolean> {
-        // منطق محاكاة لإرسال OTP عبر بائع معين
+        // منطق محاكاة الفشل لاختيار مزود الخدمة
+        // ميزة مستقبلية هنا وهي الربط مع مودل ذكاء اصطناعي
+        // بحيث يقوم باختيار مزود الخدمة حسب وقت الإرسال والموقع ورقم جوال المستخدم والشبكة المستخدمة
+        // (STC, Mobily, Zain)
         const success = Math.random() > 0.3; // افتراض نسبة نجاح 70%
         this.logger.log(`Attempting to send OTP to ${phoneNumber} via ${vendor}...`);
         this.logger.debug(`Vendor: ${vendor}, Success Simulation: ${success}`);
         return success;
     }
 
-    async sendOTP(phoneNumber: string, isTest: boolean = false): Promise<string> {
-        const vendors = ['VendorA', 'VendorB']; // قائمة البائعين
+    async sendOTP(phoneNumber: string): Promise<string> {
+        const vendors = ['VendorA', 'VendorB']; // قائمة مزودين خدمات الرسائل
+
         let success = false;
+
+        this.logger.log(`Send OTP IS_TEST value: ${this.isTest}`); 
 
         for (const vendor of vendors) {
             const otp = this.otpRepository.create({
@@ -70,7 +77,7 @@ export class OTPService {
 
             this.logger.log(`Trying vendor: ${vendor} for phone number: ${phoneNumber}`);
 
-            if (isTest) {
+            if (this.isTest) {
                 success = await this.sendViaVendor(phoneNumber, vendor); // لاختبار محاكاة الفشل
             } else {
                 success = await this.sendViaTwilio(phoneNumber, vendor); // لإرسال الرسالة الفعلية
@@ -80,7 +87,7 @@ export class OTPService {
                 otp.status = 'sent';
                 await this.otpRepository.save(otp);
                 this.logger.log(`OTP sent successfully via ${vendor} for ${phoneNumber}`);
-                return `OTP sent successfully via ${vendor}${isTest ? ' (Test Mode)' : ''}`;
+                return `OTP sent successfully via ${vendor}${this.isTest ? ' (Test Mode)' : ''}`;
             } else {
                 otp.status = 'failed';
                 await this.otpRepository.save(otp);
@@ -89,10 +96,17 @@ export class OTPService {
         }
 
         this.logger.error(`Failed to send OTP for ${phoneNumber} using all vendors`);
-        throw new Error(`Failed to send OTP via all vendors${isTest ? ' (Test Mode)' : ''}`);
+        throw new Error(`Failed to send OTP via all vendors${this.isTest ? ' (Test Mode)' : ''}`);
     }
 
     async verifyOTP(phoneNumber: string, code: string, vendor: string): Promise<boolean> {
+
+        this.logger.log(`Verify OTP with IS_TEST value: ${this.isTest}`); 
+        
+        if (this.isTest) {
+            return this.verifyVendorOTP(phoneNumber, code);
+        }
+
         if (vendor === 'VendorA' || vendor === 'VendorB') {
             let client: Twilio.Twilio;
             let verifyServiceSid: string;
