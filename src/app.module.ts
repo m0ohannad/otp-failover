@@ -23,6 +23,9 @@ import * as winston from 'winston';
       database: process.env.DB_NAME || 'otp_failover',
       autoLoadEntities: true,
       synchronize: true, // فقط أثناء التطوير
+      ssl: {
+        rejectUnauthorized: false,
+      },
     }),
     OTPModule,
   ],
