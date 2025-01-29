@@ -21,6 +21,19 @@ jobs:
         
     environment: otp-failover  # Selects the environment
     
+    env:
+      DB_HOST: ${{ secrets.DB_HOST }}
+      DB_USER: ${{ secrets.DB_USER }}
+      DB_PASS: ${{ secrets.DB_PASS }}
+      DB_NAME: ${{ secrets.DB_NAME }}
+      TWILIO_A_ACCOUNT_SID: ${{ secrets.TWILIO_A_ACCOUNT_SID }}
+      TWILIO_A_AUTH_TOKEN: ${{ secrets.TWILIO_A_AUTH_TOKEN }}
+      TWILIO_A_VERIFY_SERVICE_SID: ${{ secrets.TWILIO_A_VERIFY_SERVICE_SID }}
+      TWILIO_B_ACCOUNT_SID: ${{ secrets.TWILIO_B_ACCOUNT_SID }}
+      TWILIO_B_AUTH_TOKEN: ${{ secrets.TWILIO_B_AUTH_TOKEN }}
+      TWILIO_B_VERIFY_SERVICE_SID: ${{ secrets.TWILIO_B_VERIFY_SERVICE_SID }}
+      IS_TEST: ${{ secrets.IS_TEST }}
+    
     steps:
     - uses: actions/checkout@v4
     - name: Use Node.js ${{ matrix.node-version }}
