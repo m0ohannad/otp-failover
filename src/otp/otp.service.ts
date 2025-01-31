@@ -9,6 +9,9 @@ export class OTPService {
     private readonly logger = new Logger(OTPService.name);
     private readonly isTest = process.env.IS_TEST === 'true';
 
+    // مزود الخدمة المحدد للإرسال
+    private selectedVendor: string | null = null;
+
     constructor(
         @InjectRepository(OTP)
         private otpRepository: Repository<OTP>,
@@ -21,16 +24,18 @@ export class OTPService {
         // اختيار مزود الخدمة حسب الاسم
         if (vendor === 'VendorA') {
             client = Twilio(
-                process.env.TWILIO_A_ACCOUNT_SID,
+                process.env.TWILIO_A_ACCOUNT_SID_Make_an_Error,
                 process.env.TWILIO_A_AUTH_TOKEN,
             );
             verifyServiceSid = process.env.TWILIO_A_VERIFY_SERVICE_SID;
+            this.selectedVendor = vendor;
         } else if (vendor === 'VendorB') {
             client = Twilio(
                 process.env.TWILIO_B_ACCOUNT_SID,
                 process.env.TWILIO_B_AUTH_TOKEN,
             );
             verifyServiceSid = process.env.TWILIO_B_VERIFY_SERVICE_SID;
+            this.selectedVendor = vendor;
         } else {
             this.logger.error(`Unknown vendor: ${vendor}`);
             throw new Error(`Unknown vendor: ${vendor}`);
@@ -100,6 +105,8 @@ export class OTPService {
     }
 
     async verifyOTP(phoneNumber: string, code: string, vendor: string): Promise<boolean> {
+
+        vendor = this.selectedVendor || vendor;
 
         this.logger.log(`Verify OTP with IS_TEST value: ${this.isTest}`); 
         
